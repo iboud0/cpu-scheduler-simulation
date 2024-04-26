@@ -1,6 +1,9 @@
 #include "Process.h"
+#include <limits> 
 
-Process::Process(int id, int arrival, int burst, int prio): processID(id), arrivalTime(arrival), burstTime(burst), priority(prio) {}
+
+Process::Process(int processID, int arrivalTime, int burstTime, int priority)
+    : processID(processID), arrivalTime(arrivalTime), burstTime(burstTime), priority(priority) {}
 
 int Process::getProcessID() const { return processID; }
 int Process::getArrivalTime() const { return arrivalTime; }

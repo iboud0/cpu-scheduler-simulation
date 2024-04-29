@@ -6,6 +6,7 @@ private:
     int processID;
     int arrivalTime;
     int burstTime;
+    int executionTime = 0;
     int priority; // Only applicable for Priority Scheduling
 
 public:
@@ -14,11 +15,13 @@ public:
     int getProcessID() const;
     int getArrivalTime() const;
     int getBurstTime() const;
+    int getExecutionTime() const;
     int getPriority() const;
 
     void setProcessID(int id);
     void setArrivalTime(int  arrival);
     void setBurstTime(int burst);
+    void setExecutionTime(int exec);
     void setPriority(int prio);
 };
 

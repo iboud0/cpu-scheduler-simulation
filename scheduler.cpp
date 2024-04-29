@@ -1,7 +1,8 @@
 #include "Scheduler.h"
 #include <iostream>
 #include <climits>
-#include <queue> 
+#include <queue>
+#include <algorithm>
 
 
 void FCFS(std::vector<Process>& processes) {

@@ -3,7 +3,7 @@
 int main() {
     // Create a test process table
     ProcessTable processTable;
-    processTable.addProcess(Process(1, 0, 7));
+    processTable.addProcess(Process(1, 0, 1));
     processTable.addProcess(Process(2, 1, 1));
     processTable.addProcess(Process(3, 2, 5));
     processTable.addProcess(Process(4, 3, 2));

@@ -1,12 +1,11 @@
-#include "FCFSScheduler.h"
+#include "SJFScheduler.h"
 #include <iostream>
 #include <algorithm>
-#include <vector>
 #include <set>
 
-FCFSScheduler::FCFSScheduler() : processTable() {}
+SJFScheduler::SJFScheduler() : processTable() {}
 
-void FCFSScheduler::displayTable(int idx1, int idx2, const ProcessTable& sortedTable, const std::vector<int>& doneProcesses) const {
+void SJFScheduler::displayTable(int idx1, int idx2, const ProcessTable& sortedTable, const std::vector<int>& doneProcesses) const {
     std::cout << "P | At | Et | Bt\n";
     for (int p = 0; p < doneProcesses.size(); p++) {
             std::cout << "P" << sortedTable[doneProcesses[p]].getProcessID() << " | " 
@@ -15,7 +14,7 @@ void FCFSScheduler::displayTable(int idx1, int idx2, const ProcessTable& sortedT
                       << sortedTable[doneProcesses[p]].getBurstTime() << " \n";
     }
     for (int p = idx1; p <= idx2; ++p) {
-       if (std::find(doneProcesses.begin(), doneProcesses.end(), p) == doneProcesses.end()) {
+        if (std::find(doneProcesses.begin(), doneProcesses.end(), p) == doneProcesses.end()) {
             std::cout << "P" << sortedTable[p].getProcessID() << " | "
                     << sortedTable[p].getArrivalTime() << " | "
                     << sortedTable[p].getExecutionTime() << " | "
@@ -24,25 +23,33 @@ void FCFSScheduler::displayTable(int idx1, int idx2, const ProcessTable& sortedT
     }
 }
 
-void FCFSScheduler::schedulerSim(const ProcessTable& table) {
+void SJFScheduler::schedulerSim(const ProcessTable& table) {
     ProcessTable sortedTable = table;
     std::sort(sortedTable.begin(), sortedTable.end(), [](const Process& a, const Process& b) {
-        return a.getArrivalTime() < b.getArrivalTime();
+        if (a.getArrivalTime() == b.getArrivalTime()) {
+            // If arrival times are equal, sort by burst time
+            return a.getBurstTime() < b.getBurstTime();
+        } else {
+            return a.getArrivalTime() < b.getArrivalTime();
+        }
     });
 
-    std::cout << "FCFS Scheduling Simulation: \n";
+    std::cout << "SJF Scheduling Simulation: \n";
 
     int currentTime = 0, elapsedTime = 0, currentProcess = 0, lastExecProcess = 0, lastArrProcess;
     std::vector<int> doneProcesses;
     std::set<int> arrivedProcesses;
+    std::vector<int> availableProcesses;
 
     // Arrival of processes event
     for (int p = 0; p < sortedTable.size(); p++) {
         if (sortedTable[p].getArrivalTime() == sortedTable[p + 1].getArrivalTime() && p != sortedTable.size() - 1) {
             arrivedProcesses.insert(p);
+            availableProcesses.push_back(p);
             lastArrProcess = p;
         } else {
             arrivedProcesses.insert(p);
+            availableProcesses.push_back(p);
             lastArrProcess = p;
             std::cout << "At ";
             for (auto it = arrivedProcesses.begin(); it != arrivedProcesses.end(); ++it) {
@@ -51,10 +58,10 @@ void FCFSScheduler::schedulerSim(const ProcessTable& table) {
             }
             std::cout << "arrival: \n";
             arrivedProcesses.clear();
-
+            
             elapsedTime = sortedTable[p].getArrivalTime() - currentTime;
             currentTime = sortedTable[p].getArrivalTime();
-
+                
             if (sortedTable[currentProcess].getExecutionTime() + elapsedTime < sortedTable[currentProcess].getBurstTime()) {
                 // Update current process info
                 sortedTable[currentProcess].setExecutionTime(sortedTable[currentProcess].getExecutionTime() + elapsedTime);
@@ -66,7 +73,19 @@ void FCFSScheduler::schedulerSim(const ProcessTable& table) {
 
                 doneProcesses.push_back(currentProcess);
                 lastExecProcess = currentProcess;
-                currentProcess++;
+
+                // Deleting the executed process from available processes vector
+                int valueToBeDeleted = currentProcess;
+                auto it = find(availableProcesses.begin(), availableProcesses.end(), valueToBeDeleted);
+                if (it != availableProcesses.end()) {
+                    availableProcesses.erase(it);
+                }
+
+                std::sort(availableProcesses.begin(), availableProcesses.end(), [&](int a, int b) {
+                    return sortedTable[a].getBurstTime() < sortedTable[b].getBurstTime();
+                });
+
+                currentProcess = availableProcesses[0];
             } else {
                 // Current process is done and we have remaining time
                 int remTime = sortedTable[currentProcess].getExecutionTime() + elapsedTime  - sortedTable[currentProcess].getBurstTime();
@@ -75,7 +94,20 @@ void FCFSScheduler::schedulerSim(const ProcessTable& table) {
 
                 doneProcesses.push_back(currentProcess);
                 lastExecProcess = currentProcess;
-                currentProcess++;
+
+                // Deleting the executed process from available processes vector
+                int valueToBeDeleted = currentProcess;
+                auto it = find(availableProcesses.begin(), availableProcesses.end(), valueToBeDeleted);
+                if (it != availableProcesses.end()) {
+                    availableProcesses.erase(it);
+                }
+
+                std::sort(availableProcesses.begin(), availableProcesses.end(), [&](int a, int b) {
+                    return sortedTable[a].getBurstTime() < sortedTable[b].getBurstTime();
+                });
+
+                int temp = 0;
+                currentProcess = availableProcesses[temp];
 
                 while (remTime != 0) {
                     if (remTime < sortedTable[currentProcess].getBurstTime()) {
@@ -86,15 +118,29 @@ void FCFSScheduler::schedulerSim(const ProcessTable& table) {
 
                         doneProcesses.push_back(currentProcess);
                         lastExecProcess = currentProcess;
+
+                        int valueToBeDeleted = currentProcess;
+                        auto it = find(availableProcesses.begin(), availableProcesses.end(), valueToBeDeleted);
+                        if (it != availableProcesses.end()) {
+                            availableProcesses.erase(it);
+                        }
+
                         remTime = 0;
-                        currentProcess++;
+                        currentProcess = availableProcesses[temp++];
                     } else {
                         sortedTable[currentProcess].setExecutionTime(sortedTable[currentProcess].getBurstTime());
 
                         doneProcesses.push_back(currentProcess);
                         lastExecProcess = currentProcess;
+
+                        int valueToBeDeleted = currentProcess;
+                        auto it = find(availableProcesses.begin(), availableProcesses.end(), valueToBeDeleted);
+                        if (it != availableProcesses.end()) {
+                            availableProcesses.erase(it);
+                        }
+
                         remTime -= sortedTable[currentProcess].getBurstTime();
-                        currentProcess++;
+                        currentProcess = availableProcesses[temp++];
                     }
                     
                 }
@@ -105,22 +151,26 @@ void FCFSScheduler::schedulerSim(const ProcessTable& table) {
     }
 
     // If any processes remain unexecuted
-    if (sortedTable.size() != doneProcesses.size()) {
-        for (int p = lastExecProcess + 1; p < sortedTable.size(); p++) {
-            std::cout << "P" << sortedTable[p].getProcessID() << " executes: \n";
+    if (!availableProcesses.empty()) {
+        std::sort(availableProcesses.begin(), availableProcesses.end(), [&](int a, int b) {
+            return sortedTable[a].getBurstTime() < sortedTable[b].getBurstTime();
+        });
 
-            elapsedTime = sortedTable[p].getBurstTime() - sortedTable[p].getExecutionTime();
+        for (int p = 0; p < availableProcesses.size(); p++) {
+            std::cout << "P" << sortedTable[availableProcesses[p]].getProcessID() << " executes: \n";
+
+            elapsedTime = sortedTable[availableProcesses[p]].getBurstTime() - sortedTable[availableProcesses[p]].getExecutionTime();
             currentTime += elapsedTime;
 
             // Update current executing process info
-            sortedTable[p].setExecutionTime(sortedTable[p].getExecutionTime() + elapsedTime);
-            displayTable(p, sortedTable.size() - 1, sortedTable, doneProcesses);
+            sortedTable[availableProcesses[p]].setExecutionTime(sortedTable[availableProcesses[p]].getExecutionTime() + elapsedTime);
+            displayTable(availableProcesses[p], sortedTable.size() - 1, sortedTable, doneProcesses);
 
             doneProcesses.push_back(currentProcess);
         }
     }
 }
 
-void FCFSScheduler::setProcessTable(const ProcessTable& table) {
+void SJFScheduler::setProcessTable(const ProcessTable& table) {
     processTable = table;
 }

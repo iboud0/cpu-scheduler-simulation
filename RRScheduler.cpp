@@ -37,11 +37,29 @@ void RRScheduler::schedulerSim(const ProcessTable& table, float timeQuantum) {
 
     int currentTime = 0, currentProcess = 0, lastArrProcess, flag = 0;
     std::set<int> arrivedProcesses;
-    // First process arrival
-    displayTable(0, 0, sortedTable, doneProcesses);
-    readyQ.push(0);
-    lastArrProcess = 0;
-    while (!readyQ.empty()) {
+    // First processes to arrive
+    for (int p = 0; p < sortedTable.size(); p++) {
+        if (sortedTable[p].getArrivalTime() == sortedTable[p + 1].getArrivalTime() && p != sortedTable.size() - 1) {
+            arrivedProcesses.insert(p);
+            lastArrProcess = p;
+            readyQ.push(p);
+        } else {
+            arrivedProcesses.insert(p);
+            lastArrProcess = p;
+            readyQ.push(p);
+            break;
+        }
+    }
+
+    for (auto it = arrivedProcesses.begin(); it != arrivedProcesses.end(); ++it) {
+        int value = *it;
+        std::cout << "P" << sortedTable[value].getProcessID() << " ";
+    }
+    std::cout << "arrive: \n";
+    displayTable(0, lastArrProcess, sortedTable, doneProcesses);
+    arrivedProcesses.clear();
+
+    while (!readyQ.empty() && doneProcesses.size() != sortedTable.size()) {
         currentTime += q;
         currentProcess = readyQ.front();
         readyQ.pop();
@@ -61,10 +79,15 @@ void RRScheduler::schedulerSim(const ProcessTable& table, float timeQuantum) {
         if (sortedTable[currentProcess].getExecutionTime() + q < sortedTable[currentProcess].getBurstTime()) {
             sortedTable[currentProcess].setExecutionTime(sortedTable[currentProcess].getExecutionTime() + q);
             readyQ.push(currentProcess);
+        } else if (sortedTable[currentProcess].getExecutionTime() + q == sortedTable[currentProcess].getBurstTime()){
+            sortedTable[currentProcess].setExecutionTime(sortedTable[currentProcess].getBurstTime());
+            doneProcesses.push_back(currentProcess);
+            flag = 1;
         } else {
             sortedTable[currentProcess].setExecutionTime(sortedTable[currentProcess].getBurstTime());
             doneProcesses.push_back(currentProcess);
             flag = 1;
+            currentTime -= sortedTable[currentProcess].getExecutionTime() + q - sortedTable[currentProcess].getBurstTime();
         }
 
         // Display process table depending on what event happend

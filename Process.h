@@ -3,11 +3,16 @@
 
 class Process {
 private:
-    int processID;
+    int id;
     int arrivalTime;
     int burstTime;
-    int executionTime = 0;
-    int priority; // Only applicable for Priority Scheduling
+    int startTime;
+    int completionTime;
+    int executionTime;
+    int waitingTime;
+    int turnaroundTime;
+    int priority;
+    bool isComplete;
 
 public:
     Process(int id, int arrival, int burst, int prio = 0);
@@ -15,14 +20,24 @@ public:
     int getProcessID() const;
     int getArrivalTime() const;
     int getBurstTime() const;
+    int getStartTime() const;
+    int getCompletionTime() const;
     int getExecutionTime() const;
+    int getWaitingTime() const;
+    int getTurnaroundTime() const;
     int getPriority() const;
+    bool getIsComplete() const;
 
     void setProcessID(int id);
-    void setArrivalTime(int  arrival);
+    void setArrivalTime(int arrival);
     void setBurstTime(int burst);
+    void setStartTime(int start);
+    void setCompletionTime(int completion);
     void setExecutionTime(int exec);
+    void setWaitingTime(int wait);
+    void setTurnaroundTime(int turnaround);
     void setPriority(int prio);
+    void setIsComplete(bool complete);
 };
 
 #endif // PROCESS_H
